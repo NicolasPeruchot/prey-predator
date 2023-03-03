@@ -9,11 +9,13 @@ Replication of the model found in NetLogo:
     Northwestern University, Evanston, IL.
 """
 
-from mesa import Model
-from mesa.space import MultiGrid
-from mesa.datacollection import DataCollector
+import random
 
-from prey_predator.agents import Sheep, Wolf, GrassPatch
+from mesa import Model
+from mesa.datacollection import DataCollector
+from mesa.space import MultiGrid
+
+from prey_predator.agents import GrassPatch, Sheep, Wolf
 from prey_predator.schedule import RandomActivationByBreed
 
 
@@ -37,9 +39,7 @@ class WolfSheep(Model):
     grass_regrowth_time = 30
     sheep_gain_from_food = 4
 
-    description = (
-        "A model for simulating wolf and sheep (predator-prey) ecosystem modelling."
-    )
+    description = "A model for simulating wolf and sheep (predator-prey) ecosystem modelling."
 
     def __init__(
         self,
@@ -90,14 +90,34 @@ class WolfSheep(Model):
             }
         )
 
-        # Create sheep:
-        # ... to be completed
+        j = 0
+        for x in range(self.grid.width):
+            for y in range(self.grid.height):
+                p = random.uniform(0, 1) < 0.5
+                fully_grown = p < 0.5
+                a = GrassPatch(
+                    unique_id=j,
+                    model=self,
+                    fully_grown=fully_grown,
+                    countdown=5,
+                )
+                self.schedule.add(a)
+                self.grid.place_agent(a, (x, y))
+                j += 1
 
-        # Create wolves
-        # ... to be completed
+        # for i in range(self.initial_sheep):
+        #     a = Sheep(i, self)
+        #     self.schedule.add(a)
+        #     x = self.random.randrange(self.grid.width)
+        #     y = self.random.randrange(self.grid.height)
+        #     self.grid.place_agent(a, (x, y))
 
-        # Create grass patches
-        # ... to be completed
+        # for i in range(self.initial_wolves):
+        #     a = Wolf(i, self)
+        #     self.schedule.add(a)
+        #     x = self.random.randrange(self.grid.width)
+        #     y = self.random.randrange(self.grid.height)
+        #     self.grid.place_agent(a, (x, y))
 
     def step(self):
         self.schedule.step()
@@ -108,6 +128,5 @@ class WolfSheep(Model):
         # ... to be completed
 
     def run_model(self, step_count=200):
-
-        # ... to be completed
-
+        for _ in range(step_count):
+            self.step()

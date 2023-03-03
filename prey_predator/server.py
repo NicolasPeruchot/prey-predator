@@ -2,7 +2,7 @@ from mesa.visualization.ModularVisualization import ModularServer
 from mesa.visualization.modules import CanvasGrid, ChartModule
 from mesa.visualization.UserParam import UserSettableParameter
 
-from prey_predator.agents import Wolf, Sheep, GrassPatch
+from prey_predator.agents import GrassPatch, Sheep, Wolf
 from prey_predator.model import WolfSheep
 
 
@@ -10,16 +10,25 @@ def wolf_sheep_portrayal(agent):
     if agent is None:
         return
 
-    portrayal = {}
+    portrayal = {"Shape": "circle", "Filled": "true", "r": 0.5}
 
     if type(agent) is Sheep:
-        # ... to be completed
+        portrayal["Color"] = "grey"
+        portrayal["Layer"] = 1
+        portrayal["r"] = 0.2
 
     elif type(agent) is Wolf:
-        # ... to be completed
+        portrayal["Color"] = "ref"
+        portrayal["Layer"] = 1
+        portrayal["r"] = 0.5
 
     elif type(agent) is GrassPatch:
-        # ... to be completed
+        portrayal["Color"] = "green"
+        portrayal["Layer"] = 1
+        if agent.fully_grown == True:
+            portrayal["r"] = 0.8
+        else:
+            portrayal["r"] = 0
 
     return portrayal
 

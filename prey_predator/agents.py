@@ -1,7 +1,10 @@
 import mesa
+
 from mesa import Agent, Model
-from prey_predator.random_walk import RandomWalker
 from mesa.space import MultiGrid
+
+from prey_predator.random_walk import RandomWalker
+
 
 class Sheep(RandomWalker):
     """
@@ -21,13 +24,13 @@ class Sheep(RandomWalker):
         A model step. Move, then eat grass and reproduce.
         """
         self.random_move()
-        self.energy-= 1
-        item_on_cell=get_cell_list_contents(([self.pos]))
-        is_patch=self.model.grid.get_cell_list
-        # is_instance : correspondance
-        if self.pos == patch.pos:
-            self.energy += 10
-            patch.eaten = True
+        self.energy -= 1
+        # item_on_cell = get_cell_list_contents(([self.pos]))
+        # is_patch = self.model.grid.get_cell_list
+        # # is_instance : correspondance
+        # if self.pos == patch.pos:
+        #     self.energy += 10
+        #     patch.eaten = True
 
 
 class Wolf(RandomWalker):
@@ -51,7 +54,7 @@ class GrassPatch(Agent):
     A patch of grass that grows at a fixed rate and it is eaten by sheep
     """
 
-    def __init__(self, unique_id, pos, model, fully_grown, countdown):
+    def __init__(self, unique_id, model, fully_grown, countdown):
         """
         Creates a new patch of grass
 
@@ -60,12 +63,11 @@ class GrassPatch(Agent):
             countdown: Time for the patch of grass to be fully grown again
         """
         super().__init__(unique_id, model)
-        self.fully_grown=fully_grown
-        self.countdown=countdown
-        self.pos=pos
+        self.fully_grown = fully_grown
+        self.countdown = countdown
 
     def step(self):
-        self.countdown -=1
+        self.countdown -= 1
         # when the countdown is over, the grass has grown and is eatable
-        if self.countdown<=0:
-            self.fully_grown=True
+        if self.countdown <= 0:
+            self.fully_grown = True
