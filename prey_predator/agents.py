@@ -5,6 +5,7 @@ from mesa.space import MultiGrid
 
 from prey_predator.random_walk import RandomWalker
 
+import random
 
 class Sheep(RandomWalker):
     """
@@ -15,10 +16,11 @@ class Sheep(RandomWalker):
 
     energy = None
 
-    def __init__(self, unique_id, pos, model, moore,sheep_gain_from_food, energy=None):
+    def __init__(self, unique_id, pos, model, moore,sheep_gain_from_food,sheep_reproduce, energy=None):
         super().__init__(unique_id, pos, model, moore=moore)
         self.energy = energy
         self.sheep_gain_from_food=sheep_gain_from_food
+        self.sheep_reproduce=sheep_reproduce
         self.item_on_cell=self.model.grid.get_cell_list_contents(([self.pos]))
 
 
@@ -29,9 +31,25 @@ class Sheep(RandomWalker):
         self.random_move()
         self.energy -= 1
         grass_patch = [obj for obj in self.item_on_cell if isinstance(obj, GrassPatch)]
+        #needed if two parents for reproduction
+        #sheep_on_cell=[obj for obj in self.item_on_cell if isinstance(obj, Sheep)]
+
+        #if there is grass on the cell, the sheep eat it and gain energy
         if len(grass_patch) > 0:
             self.energy += self.sheep_gain_from_food
-            grass_patch[0].fully_grown=False        
+            grass_patch[0].fully_grown=False   
+
+        #needed if two parents for reproduction     
+        #if len(sheep_on_cell)>0:
+
+        #a parent has a child with proba 0.04
+        if random.uniform(0, 1)< self.sheep_reproduce:
+            a = Sheep(i, self) 
+            #comment faire pour l'id unique ???
+            self.schedule.add(a)
+            self.grid.place_agent(a, self.pos)
+
+
 
 class Wolf(RandomWalker):
     """
@@ -43,6 +61,11 @@ class Wolf(RandomWalker):
     def __init__(self, unique_id, pos, model, moore, energy=None):
         super().__init__(unique_id, pos, model, moore=moore)
         self.energy = energy
+        '''
+        self.wolf_gain_from_food=wolf_gain_from_food
+        self.wolf_reproduce=wolf_reproduce
+        self.item_on_cell=self.model.grid.get_cell_list_contents(([self.pos]))
+        '''
 
     def step(self):
         self.random_move()
