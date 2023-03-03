@@ -15,9 +15,12 @@ class Sheep(RandomWalker):
 
     energy = None
 
-    def __init__(self, unique_id, pos, model, moore, energy=None):
+    def __init__(self, unique_id, pos, model, moore,sheep_gain_from_food, energy=None):
         super().__init__(unique_id, pos, model, moore=moore)
         self.energy = energy
+        self.sheep_gain_from_food=sheep_gain_from_food
+        self.item_on_cell=self.model.grid.get_cell_list_contents(([self.pos]))
+
 
     def step(self):
         """
@@ -25,13 +28,10 @@ class Sheep(RandomWalker):
         """
         self.random_move()
         self.energy -= 1
-        # item_on_cell = get_cell_list_contents(([self.pos]))
-        # is_patch = self.model.grid.get_cell_list
-        # # is_instance : correspondance
-        # if self.pos == patch.pos:
-        #     self.energy += 10
-        #     patch.eaten = True
-
+        grass_patch = [obj for obj in self.item_on_cell if isinstance(obj, GrassPatch)]
+        if len(grass_patch) > 0:
+            self.energy += self.sheep_gain_from_food
+            grass_patch[0].fully_grown=False        
 
 class Wolf(RandomWalker):
     """
