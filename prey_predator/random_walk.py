@@ -14,11 +14,6 @@ class RandomWalker(Agent):
 
     """
 
-    grid = None
-    x = None
-    y = None
-    moore = True
-
     def __init__(self, unique_id, pos, model, moore=True):
         """
         grid: The MultiGrid object in which the agent lives.

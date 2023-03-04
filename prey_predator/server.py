@@ -20,9 +20,9 @@ def wolf_sheep_portrayal(agent):
         portrayal["r"] = 0.4
 
     elif type(agent) is Wolf:
-        portrayal["Color"] = "red"
+        portrayal["Color"] = "black"
         portrayal["Layer"] = 1
-        portrayal["r"] = 0.5
+        portrayal["r"] = 0.8
 
     elif type(agent) is GrassPatch:
         portrayal["Shape"] = "rect"
@@ -45,10 +45,7 @@ chart_element = ChartModule(
     ]
 )
 
-model_params = {
-    "grass": True
-    # ... to be completed
-}
+model_params = {}
 
 server = ModularServer(
     WolfSheep, [canvas_element, chart_element], "Prey Predator Model", model_params

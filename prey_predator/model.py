@@ -119,13 +119,19 @@ class WolfSheep(Model):
             self.grid.place_agent(a, (x, y))
             self.current_id += 1
 
-        # for _ in range(self.initial_wolves):
-        #     a = Wolf(self.current_id, self)
-        #     self.schedule.add(a)
-        #     x = self.random.randrange(self.grid.width)
-        #     y = self.random.randrange(self.grid.height)
-        #     self.grid.place_agent(a, (x, y))
-        #     self.current_id += 1
+        for _ in range(self.initial_wolves):
+            a = Wolf(
+                unique_id=self.current_id,
+                pos=None,
+                model=self,
+                moore=self.moore,
+                energy=self.initial_energy,
+            )
+            self.schedule.add(a)
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
+            self.grid.place_agent(a, (x, y))
+            self.current_id += 1
 
     def step(self):
         self.schedule.step()

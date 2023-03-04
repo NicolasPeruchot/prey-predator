@@ -5,6 +5,11 @@ from mesa import Agent
 from prey_predator.random_walk import RandomWalker
 
 
+def remove_agent(agent):
+    agent.model.grid.remove_agent(agent)
+    agent.model.schedule.remove(agent)
+
+
 class Sheep(RandomWalker):
     """
     A sheep that walks around, reproduces (asexually) and gets eaten.
@@ -34,8 +39,7 @@ class Sheep(RandomWalker):
 
         # If a sheep has no more energy, it dies
         if self.energy == 0:
-            self.model.grid.remove_agent(self)
-            self.model.schedule.remove(self)
+            remove_agent(self)
 
         else:
             item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
@@ -74,18 +78,39 @@ class Wolf(RandomWalker):
 
     energy = None
 
-    def __init__(self, unique_id, pos, model, moore, energy=None):
-        super().__init__(unique_id, pos, model, moore=moore)
+    def __init__(self, unique_id, pos, model, moore, energy):
+        super().__init__(unique_id, pos, model, moore)
         self.energy = energy
-        """
-        self.wolf_gain_from_food=wolf_gain_from_food
-        self.wolf_reproduce=wolf_reproduce
-        self.item_on_cell=self.model.grid.get_cell_list_contents(([self.pos]))
-        """
 
     def step(self):
         self.random_move()
         self.energy -= 1
+
+        # If a wolf has no more energy, it dies
+        if self.energy == 0:
+            remove_agent(self)
+
+        else:
+            item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
+            sheeps = [obj for obj in item_on_cell if isinstance(obj, Sheep) is True]
+
+            # if there is a sheep on the cell, the wolf eat it and gain energy
+            if sheeps:
+                self.energy += self.model.wolf_gain_from_food
+                remove_agent(sheeps[0])
+
+            # a parent has a child with proba self.sheep_reproduce
+            if random.uniform(0, 1) < self.model.wolf_reproduce:
+                a = Wolf(
+                    unique_id=self.model.current_id,
+                    pos=None,
+                    model=self.model,
+                    moore=True,
+                    energy=self.model.initial_energy,
+                )
+                self.model.schedule.add(a)
+                self.model.grid.place_agent(a, self.pos)
+                self.model.current_id += 1
 
 
 class GrassPatch(Agent):
