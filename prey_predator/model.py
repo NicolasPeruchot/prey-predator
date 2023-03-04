@@ -22,24 +22,10 @@ from prey_predator.schedule import RandomActivationByBreed
 class WolfSheep(Model):
     """
     Wolf-Sheep Predation Model
+
+    A model for simulating wolf and sheep (predator-prey) ecosystem modelling.
+
     """
-
-    height = 20
-    width = 20
-
-    initial_sheep = 100
-    initial_wolves = 50
-
-    sheep_reproduce = 0.04
-    wolf_reproduce = 0.05
-
-    wolf_gain_from_food = 20
-
-    grass = False
-    grass_regrowth_time = 30
-    sheep_gain_from_food = 4
-
-    description = "A model for simulating wolf and sheep (predator-prey) ecosystem modelling."
 
     def __init__(
         self,
@@ -47,12 +33,15 @@ class WolfSheep(Model):
         width=20,
         initial_sheep=100,
         initial_wolves=50,
+        initial_grown_grass=0.5,
+        initial_energy=10,
         sheep_reproduce=0.04,
         wolf_reproduce=0.05,
         wolf_gain_from_food=20,
-        grass=False,
+        grass=True,
         grass_regrowth_time=30,
         sheep_gain_from_food=4,
+        moore=True,
     ):
         """
         Create a new Wolf-Sheep model with the given parameters.
@@ -60,6 +49,8 @@ class WolfSheep(Model):
         Args:
             initial_sheep: Number of sheep to start with
             initial_wolves: Number of wolves to start with
+            initial_grown_grass: Probability of each grass patch to be grown at the beginning
+            initial_energy: intial energy for sheeps and wolves
             sheep_reproduce: Probability of each sheep reproducing each step
             wolf_reproduce: Probability of each wolf reproducing each step
             wolf_gain_from_food: Energy a wolf gains from eating a sheep
@@ -67,6 +58,7 @@ class WolfSheep(Model):
             grass_regrowth_time: How long it takes for a grass patch to regrow
                                  once it is eaten
             sheep_gain_from_food: Energy sheep gain from grass, if enabled.
+            moore : If True, may move in all 8 directions. Otherwise, only up, down, left, right
         """
         super().__init__()
         # Set parameters
@@ -74,12 +66,15 @@ class WolfSheep(Model):
         self.width = width
         self.initial_sheep = initial_sheep
         self.initial_wolves = initial_wolves
+        self.initial_grown_grass = initial_grown_grass
+        self.initial_energy = initial_energy
         self.sheep_reproduce = sheep_reproduce
         self.wolf_reproduce = wolf_reproduce
         self.wolf_gain_from_food = wolf_gain_from_food
         self.grass = grass
         self.grass_regrowth_time = grass_regrowth_time
         self.sheep_gain_from_food = sheep_gain_from_food
+        self.moore = moore
         self.current_id = 1
 
         self.schedule = RandomActivationByBreed(self)
@@ -103,8 +98,8 @@ class WolfSheep(Model):
                 a = GrassPatch(
                     unique_id=self.current_id,
                     model=self,
-                    fully_grown=random.uniform(0, 1) < 0.5,
-                    countdown=5,
+                    fully_grown=random.uniform(0, 1) < self.initial_grown_grass,
+                    countdown=self.grass_regrowth_time,
                 )
                 self.schedule.add(a)
                 self.grid.place_agent(a, (x, y))
@@ -115,10 +110,8 @@ class WolfSheep(Model):
                 unique_id=self.current_id,
                 pos=None,
                 model=self,
-                moore=True,
-                sheep_gain_from_food=self.sheep_gain_from_food,
-                sheep_reproduce=self.sheep_reproduce,
-                energy=10,
+                moore=self.moore,
+                energy=self.initial_energy,
             )
             self.schedule.add(a)
             x = self.random.randrange(self.grid.width)

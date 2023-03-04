@@ -1,9 +1,6 @@
 import random
 
-import mesa
-
-from mesa import Agent, Model
-from mesa.space import MultiGrid
+from mesa import Agent
 
 from prey_predator.random_walk import RandomWalker
 
@@ -18,13 +15,15 @@ class Sheep(RandomWalker):
     energy = None
 
     def __init__(
-        self, unique_id, pos, model, moore, sheep_gain_from_food, sheep_reproduce, energy=None
+        self,
+        unique_id,
+        pos,
+        model,
+        moore,
+        energy,
     ):
-        super().__init__(unique_id, pos, model, moore=moore)
+        super().__init__(unique_id, pos, model, moore)
         self.energy = energy
-        self.sheep_gain_from_food = sheep_gain_from_food
-        self.sheep_reproduce = sheep_reproduce
-        # self.item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
 
     def step(self):
         """
@@ -45,25 +44,23 @@ class Sheep(RandomWalker):
                 grass_patch = [
                     obj
                     for obj in item_on_cell
-                    if isinstance(obj, GrassPatch) and obj.fully_grown == True
+                    if isinstance(obj, GrassPatch) and obj.fully_grown is True
                 ]
 
                 # if there is grass on the cell, the sheep eat it and gain energy
                 if grass_patch:
-                    self.energy += self.sheep_gain_from_food
+                    self.energy += self.model.sheep_gain_from_food
                     grass_patch[0].fully_grown = False
                     grass_patch[0].current_countdown = grass_patch[0].countdown
 
-            # a parent has a child with proba 0.04
-            if random.uniform(0, 1) < self.sheep_reproduce:
+            # a parent has a child with proba self.sheep_reproduce
+            if random.uniform(0, 1) < self.model.sheep_reproduce:
                 a = Sheep(
                     unique_id=self.model.current_id,
                     pos=None,
                     model=self.model,
                     moore=True,
-                    sheep_gain_from_food=self.sheep_gain_from_food,
-                    sheep_reproduce=self.sheep_reproduce,
-                    energy=10,
+                    energy=self.model.initial_energy,
                 )
                 self.model.schedule.add(a)
                 self.model.grid.place_agent(a, self.pos)
