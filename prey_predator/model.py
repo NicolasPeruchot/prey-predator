@@ -80,6 +80,7 @@ class WolfSheep(Model):
         self.grass = grass
         self.grass_regrowth_time = grass_regrowth_time
         self.sheep_gain_from_food = sheep_gain_from_food
+        self.current_id = 1
 
         self.schedule = RandomActivationByBreed(self)
         self.grid = MultiGrid(self.height, self.width, torus=True)
@@ -87,37 +88,51 @@ class WolfSheep(Model):
             {
                 "Wolves": lambda m: m.schedule.get_breed_count(Wolf),
                 "Sheep": lambda m: m.schedule.get_breed_count(Sheep),
+                "Grass": lambda m: len(
+                    [
+                        grass
+                        for grass in m.schedule.agents
+                        if isinstance(grass, GrassPatch) and grass.fully_grown
+                    ]
+                ),
             }
         )
 
-        j = 0
         for x in range(self.grid.width):
             for y in range(self.grid.height):
-                p = random.uniform(0, 1) < 0.5
-                fully_grown = p < 0.5
                 a = GrassPatch(
-                    unique_id=j,
+                    unique_id=self.current_id,
                     model=self,
-                    fully_grown=fully_grown,
+                    fully_grown=random.uniform(0, 1) < 0.5,
                     countdown=5,
                 )
                 self.schedule.add(a)
                 self.grid.place_agent(a, (x, y))
-                j += 1
+                self.current_id += 1
 
-        # for i in range(self.initial_sheep):
-        #     a = Sheep(i, self)
+        for _ in range(self.initial_sheep):
+            a = Sheep(
+                unique_id=self.current_id,
+                pos=None,
+                model=self,
+                moore=True,
+                sheep_gain_from_food=self.sheep_gain_from_food,
+                sheep_reproduce=self.sheep_reproduce,
+                energy=10,
+            )
+            self.schedule.add(a)
+            x = self.random.randrange(self.grid.width)
+            y = self.random.randrange(self.grid.height)
+            self.grid.place_agent(a, (x, y))
+            self.current_id += 1
+
+        # for _ in range(self.initial_wolves):
+        #     a = Wolf(self.current_id, self)
         #     self.schedule.add(a)
         #     x = self.random.randrange(self.grid.width)
         #     y = self.random.randrange(self.grid.height)
         #     self.grid.place_agent(a, (x, y))
-
-        # for i in range(self.initial_wolves):
-        #     a = Wolf(i, self)
-        #     self.schedule.add(a)
-        #     x = self.random.randrange(self.grid.width)
-        #     y = self.random.randrange(self.grid.height)
-        #     self.grid.place_agent(a, (x, y))
+        #     self.current_id += 1
 
     def step(self):
         self.schedule.step()

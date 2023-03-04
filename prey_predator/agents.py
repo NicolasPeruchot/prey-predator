@@ -1,3 +1,5 @@
+import random
+
 import mesa
 
 from mesa import Agent, Model
@@ -5,7 +7,6 @@ from mesa.space import MultiGrid
 
 from prey_predator.random_walk import RandomWalker
 
-import random
 
 class Sheep(RandomWalker):
     """
@@ -16,13 +17,14 @@ class Sheep(RandomWalker):
 
     energy = None
 
-    def __init__(self, unique_id, pos, model, moore,sheep_gain_from_food,sheep_reproduce, energy=None):
+    def __init__(
+        self, unique_id, pos, model, moore, sheep_gain_from_food, sheep_reproduce, energy=None
+    ):
         super().__init__(unique_id, pos, model, moore=moore)
         self.energy = energy
-        self.sheep_gain_from_food=sheep_gain_from_food
-        self.sheep_reproduce=sheep_reproduce
-        self.item_on_cell=self.model.grid.get_cell_list_contents(([self.pos]))
-
+        self.sheep_gain_from_food = sheep_gain_from_food
+        self.sheep_reproduce = sheep_reproduce
+        # self.item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
 
     def step(self):
         """
@@ -30,25 +32,42 @@ class Sheep(RandomWalker):
         """
         self.random_move()
         self.energy -= 1
-        grass_patch = [obj for obj in self.item_on_cell if isinstance(obj, GrassPatch)]
-        #needed if two parents for reproduction
-        #sheep_on_cell=[obj for obj in self.item_on_cell if isinstance(obj, Sheep)]
 
-        #if there is grass on the cell, the sheep eat it and gain energy
-        if len(grass_patch) > 0:
-            self.energy += self.sheep_gain_from_food
-            grass_patch[0].fully_grown=False   
+        # If a sheep has no more energy, it dies
+        if self.energy == 0:
+            self.model.grid.remove_agent(self)
+            self.model.schedule.remove(self)
 
-        #needed if two parents for reproduction     
-        #if len(sheep_on_cell)>0:
+        else:
+            item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
 
-        #a parent has a child with proba 0.04
-        if random.uniform(0, 1)< self.sheep_reproduce:
-            a = Sheep(i, self) 
-            #comment faire pour l'id unique ???
-            self.schedule.add(a)
-            self.grid.place_agent(a, self.pos)
+            if self.model.grass:
+                grass_patch = [
+                    obj
+                    for obj in item_on_cell
+                    if isinstance(obj, GrassPatch) and obj.fully_grown == True
+                ]
 
+                # if there is grass on the cell, the sheep eat it and gain energy
+                if grass_patch:
+                    self.energy += self.sheep_gain_from_food
+                    grass_patch[0].fully_grown = False
+                    grass_patch[0].current_countdown = grass_patch[0].countdown
+
+            # a parent has a child with proba 0.04
+            if random.uniform(0, 1) < self.sheep_reproduce:
+                a = Sheep(
+                    unique_id=self.model.current_id,
+                    pos=None,
+                    model=self.model,
+                    moore=True,
+                    sheep_gain_from_food=self.sheep_gain_from_food,
+                    sheep_reproduce=self.sheep_reproduce,
+                    energy=10,
+                )
+                self.model.schedule.add(a)
+                self.model.grid.place_agent(a, self.pos)
+                self.model.current_id += 1
 
 
 class Wolf(RandomWalker):
@@ -61,11 +80,11 @@ class Wolf(RandomWalker):
     def __init__(self, unique_id, pos, model, moore, energy=None):
         super().__init__(unique_id, pos, model, moore=moore)
         self.energy = energy
-        '''
+        """
         self.wolf_gain_from_food=wolf_gain_from_food
         self.wolf_reproduce=wolf_reproduce
         self.item_on_cell=self.model.grid.get_cell_list_contents(([self.pos]))
-        '''
+        """
 
     def step(self):
         self.random_move()
@@ -88,9 +107,13 @@ class GrassPatch(Agent):
         super().__init__(unique_id, model)
         self.fully_grown = fully_grown
         self.countdown = countdown
+        self.current_countdown = countdown
 
     def step(self):
-        self.countdown -= 1
-        # when the countdown is over, the grass has grown and is eatable
-        if self.countdown <= 0:
-            self.fully_grown = True
+        if self.fully_grown:
+            pass
+        else:
+            self.current_countdown -= 1
+            # when the countdown is over, the grass has grown and is eatable
+            if self.current_countdown <= 0:
+                self.fully_grown = True

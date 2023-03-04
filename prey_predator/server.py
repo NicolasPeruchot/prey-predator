@@ -15,30 +15,36 @@ def wolf_sheep_portrayal(agent):
     if type(agent) is Sheep:
         portrayal["Color"] = "grey"
         portrayal["Layer"] = 1
-        portrayal["r"] = 0.2
+        portrayal["r"] = 0.4
 
     elif type(agent) is Wolf:
-        portrayal["Color"] = "ref"
+        portrayal["Color"] = "red"
         portrayal["Layer"] = 1
         portrayal["r"] = 0.5
 
     elif type(agent) is GrassPatch:
-        portrayal["Color"] = "green"
+        portrayal["Shape"] = "rect"
+        portrayal["w"], portrayal["h"] = 1, 1
         portrayal["Layer"] = 1
         if agent.fully_grown == True:
-            portrayal["r"] = 0.8
+            portrayal["Color"] = "green"
         else:
-            portrayal["r"] = 0
+            portrayal["Color"] = "white"
 
     return portrayal
 
 
 canvas_element = CanvasGrid(wolf_sheep_portrayal, 20, 20, 500, 500)
 chart_element = ChartModule(
-    [{"Label": "Wolves", "Color": "#AA0000"}, {"Label": "Sheep", "Color": "#666666"}]
+    [
+        {"Label": "Wolves", "Color": "#AA0000"},
+        {"Label": "Sheep", "Color": "#666666"},
+        {"Label": "Grass", "Color": "#00FF00"},
+    ]
 )
 
 model_params = {
+    "grass": True
     # ... to be completed
 }
 
