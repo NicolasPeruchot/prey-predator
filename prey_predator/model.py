@@ -38,10 +38,11 @@ class WolfSheep(Model):
         sheep_reproduce=0.04,
         wolf_reproduce=0.05,
         wolf_gain_from_food=20,
+        sheep_gain_from_food=4,
         grass=True,
         grass_regrowth_time=30,
-        sheep_gain_from_food=4,
         moore=True,
+        n_steps=200,
     ):
         """
         Create a new Wolf-Sheep model with the given parameters.
@@ -54,11 +55,12 @@ class WolfSheep(Model):
             sheep_reproduce: Probability of each sheep reproducing each step
             wolf_reproduce: Probability of each wolf reproducing each step
             wolf_gain_from_food: Energy a wolf gains from eating a sheep
+            sheep_gain_from_food: Energy sheep gain from grass, if enabled.
             grass: Whether to have the sheep eat grass for energy
             grass_regrowth_time: How long it takes for a grass patch to regrow
                                  once it is eaten
-            sheep_gain_from_food: Energy sheep gain from grass, if enabled.
             moore : If True, may move in all 8 directions. Otherwise, only up, down, left, right
+            n_steps : number of steps
         """
         super().__init__()
         # Set parameters
@@ -76,9 +78,10 @@ class WolfSheep(Model):
         self.sheep_gain_from_food = sheep_gain_from_food
         self.moore = moore
         self.current_id = 1
+        self.n_steps = n_steps
 
         self.schedule = RandomActivationByBreed(self)
-        self.grid = MultiGrid(self.height, self.width, torus=True)
+        self.grid = MultiGrid(self.width, self.height, torus=True)
         self.datacollector = DataCollector(
             {
                 "Wolves": lambda m: m.schedule.get_breed_count(Wolf),
@@ -135,12 +138,8 @@ class WolfSheep(Model):
 
     def step(self):
         self.schedule.step()
-
-        # Collect data
         self.datacollector.collect(self)
 
-        # ... to be completed
-
-    def run_model(self, step_count=200):
-        for _ in range(step_count):
+    def run_model(self):
+        for _ in range(self.n_steps):
             self.step()

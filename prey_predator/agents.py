@@ -1,5 +1,3 @@
-import random
-
 from mesa import Agent
 
 from prey_predator.random_walk import RandomWalker
@@ -10,6 +8,33 @@ def remove_agent(agent):
     agent.model.schedule.remove(agent)
 
 
+class GrassPatch(Agent):
+    """
+    A patch of grass that grows at a fixed rate and it is eaten by sheep
+    """
+
+    def __init__(self, unique_id, model, fully_grown, countdown):
+        """
+        Creates a new patch of grass
+
+        Args:
+            grown: (boolean) Whether the patch of grass is fully grown or not
+            countdown: Time for the patch of grass to be fully grown again
+            current_countdown : Current value of the cooldown
+        """
+        super().__init__(unique_id, model)
+        self.fully_grown = fully_grown
+        self.countdown = countdown
+        self.current_countdown = countdown
+
+    def step(self):
+        if self.fully_grown is not True:
+            self.current_countdown -= 1
+            # when the countdown is over, the grass has grown and is eatable
+            if self.current_countdown <= 0:
+                self.fully_grown = True
+
+
 class Sheep(RandomWalker):
     """
     A sheep that walks around, reproduces (asexually) and gets eaten.
@@ -17,17 +42,8 @@ class Sheep(RandomWalker):
     The init is the same as the RandomWalker.
     """
 
-    energy = None
-
-    def __init__(
-        self,
-        unique_id,
-        pos,
-        model,
-        moore,
-        energy,
-    ):
-        super().__init__(unique_id, pos, model, moore)
+    def __init__(self, unique_id, pos, model, energy, moore):
+        super().__init__(unique_id, pos, model, energy, moore)
         self.energy = energy
 
     def step(self):
@@ -51,24 +67,15 @@ class Sheep(RandomWalker):
                     if isinstance(obj, GrassPatch) and obj.fully_grown is True
                 ]
 
-                # if there is grass on the cell, the sheep eat it and gain energy
+                # if there is grass on the cell, the sheep eat it and gain energy.
+                # The grass cooldown is then reinitilized
                 if grass_patch:
                     self.energy += self.model.sheep_gain_from_food
                     grass_patch[0].fully_grown = False
                     grass_patch[0].current_countdown = grass_patch[0].countdown
 
-            # a parent has a child with proba self.sheep_reproduce
-            if random.uniform(0, 1) < self.model.sheep_reproduce:
-                a = Sheep(
-                    unique_id=self.model.current_id,
-                    pos=None,
-                    model=self.model,
-                    moore=True,
-                    energy=self.model.initial_energy,
-                )
-                self.model.schedule.add(a)
-                self.model.grid.place_agent(a, self.pos)
-                self.model.current_id += 1
+            # A parent has a child with a given probability
+            self.breed(self.model.sheep_reproduce)
 
 
 class Wolf(RandomWalker):
@@ -94,48 +101,12 @@ class Wolf(RandomWalker):
             item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
             sheeps = [obj for obj in item_on_cell if isinstance(obj, Sheep) is True]
 
-            # if there is a sheep on the cell, the wolf eat it and gain energy
+            # if there is a sheep on the cell, the wolf eat it and gain energy.
+            # The sheep then dies
+            # A wolf eats only one sheep per step
             if sheeps:
                 self.energy += self.model.wolf_gain_from_food
                 remove_agent(sheeps[0])
 
-            # a parent has a child with proba self.sheep_reproduce
-            if random.uniform(0, 1) < self.model.wolf_reproduce:
-                a = Wolf(
-                    unique_id=self.model.current_id,
-                    pos=None,
-                    model=self.model,
-                    moore=True,
-                    energy=self.model.initial_energy,
-                )
-                self.model.schedule.add(a)
-                self.model.grid.place_agent(a, self.pos)
-                self.model.current_id += 1
-
-
-class GrassPatch(Agent):
-    """
-    A patch of grass that grows at a fixed rate and it is eaten by sheep
-    """
-
-    def __init__(self, unique_id, model, fully_grown, countdown):
-        """
-        Creates a new patch of grass
-
-        Args:
-            grown: (boolean) Whether the patch of grass is fully grown or not
-            countdown: Time for the patch of grass to be fully grown again
-        """
-        super().__init__(unique_id, model)
-        self.fully_grown = fully_grown
-        self.countdown = countdown
-        self.current_countdown = countdown
-
-    def step(self):
-        if self.fully_grown:
-            pass
-        else:
-            self.current_countdown -= 1
-            # when the countdown is over, the grass has grown and is eatable
-            if self.current_countdown <= 0:
-                self.fully_grown = True
+            # A parent has a child with a given probability
+            self.breed(self.model.sheep_reproduce)
