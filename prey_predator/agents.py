@@ -60,22 +60,24 @@ class Sheep(RandomWalker):
         else:
             item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
 
-            if self.model.grass:
-                grass_patch = [
-                    obj
-                    for obj in item_on_cell
-                    if isinstance(obj, GrassPatch) and obj.fully_grown is True
-                ]
+            # The sheep eats only if it is too weak
+            if self.energy < self.model.sheep_energy_threshold:
+                if self.model.grass:
+                    grass_patch = [
+                        obj
+                        for obj in item_on_cell
+                        if isinstance(obj, GrassPatch) and obj.fully_grown is True
+                    ]
 
-                # if there is grass on the cell, the sheep eat it and gain energy.
-                # The grass cooldown is then reinitilized
-                if grass_patch:
-                    self.energy += self.model.sheep_gain_from_food
-                    grass_patch[0].fully_grown = False
-                    grass_patch[0].current_countdown = grass_patch[0].countdown
+                    # if there is grass on the cell, the sheep eat it and gain energy.
+                    # The grass cooldown is then reinitilized
+                    if grass_patch:
+                        self.energy += self.model.sheep_gain_from_food
+                        grass_patch[0].fully_grown = False
+                        grass_patch[0].current_countdown = grass_patch[0].countdown
 
             # A parent has a child with a given probability
-            self.breed(self.model.sheep_reproduce)
+            self.breed(self.model.sheep_reproduce, self.model.sheep_initial_energy)
 
 
 class Wolf(RandomWalker):
@@ -98,15 +100,17 @@ class Wolf(RandomWalker):
             remove_agent(self)
 
         else:
-            item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
-            sheeps = [obj for obj in item_on_cell if isinstance(obj, Sheep) is True]
+            # The wolf eats only if it is too weak
+            if self.energy < self.model.wolf_energy_threshold:
+                item_on_cell = self.model.grid.get_cell_list_contents(([self.pos]))
+                sheeps = [obj for obj in item_on_cell if isinstance(obj, Sheep) is True]
 
-            # if there is a sheep on the cell, the wolf eat it and gain energy.
-            # The sheep then dies
-            # A wolf eats only one sheep per step
-            if sheeps:
-                self.energy += self.model.wolf_gain_from_food
-                remove_agent(sheeps[0])
+                # if there is a sheep on the cell, the wolf eat it and gain energy.
+                # The sheep then dies
+                # A wolf eats only one sheep per step
+                if sheeps:
+                    self.energy += self.model.wolf_gain_from_food
+                    remove_agent(sheeps[0])
 
             # A parent has a child with a given probability
-            self.breed(self.model.sheep_reproduce)
+            self.breed(self.model.wolf_reproduce, self.model.wolf_initial_energy)

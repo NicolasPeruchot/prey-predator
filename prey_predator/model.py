@@ -34,11 +34,15 @@ class WolfSheep(Model):
         initial_sheep=100,
         initial_wolves=50,
         initial_grown_grass=0.5,
-        initial_energy=10,
+        wolf_initial_energy=10,
+        sheep_initial_energy=10,
         sheep_reproduce=0.04,
         wolf_reproduce=0.05,
         wolf_gain_from_food=20,
         sheep_gain_from_food=4,
+        wolf_energy_threshold=30,
+        sheep_energy_threshold=30,
+        grass_probability=0.7,
         grass=True,
         grass_regrowth_time=30,
         moore=True,
@@ -51,11 +55,15 @@ class WolfSheep(Model):
             initial_sheep: Number of sheep to start with
             initial_wolves: Number of wolves to start with
             initial_grown_grass: Probability of each grass patch to be grown at the beginning
-            initial_energy: intial energy for sheeps and wolves
+            wolf_initial_energy: intial energy for wolves
+            sheep_intial_energy: intial energy for sheeps
             sheep_reproduce: Probability of each sheep reproducing each step
             wolf_reproduce: Probability of each wolf reproducing each step
             wolf_gain_from_food: Energy a wolf gains from eating a sheep
             sheep_gain_from_food: Energy sheep gain from grass, if enabled.
+            wolf_energy_threshold: If the energy is above, the wolf doesn't eat
+            sheep_energy_threshold: If the energy is above, the wolf doesn't eat
+            grass_probability: Probability for a cell to contain grass
             grass: Whether to have the sheep eat grass for energy
             grass_regrowth_time: How long it takes for a grass patch to regrow
                                  once it is eaten
@@ -69,13 +77,17 @@ class WolfSheep(Model):
         self.initial_sheep = initial_sheep
         self.initial_wolves = initial_wolves
         self.initial_grown_grass = initial_grown_grass
-        self.initial_energy = initial_energy
+        self.wolf_initial_energy = wolf_initial_energy
+        self.sheep_initial_energy = sheep_initial_energy
         self.sheep_reproduce = sheep_reproduce
         self.wolf_reproduce = wolf_reproduce
         self.wolf_gain_from_food = wolf_gain_from_food
+        self.grass_probability = grass_probability
         self.grass = grass
         self.grass_regrowth_time = grass_regrowth_time
         self.sheep_gain_from_food = sheep_gain_from_food
+        self.wolf_energy_threshold = wolf_energy_threshold
+        self.sheep_energy_threshold = sheep_energy_threshold
         self.moore = moore
         self.current_id = 1
         self.n_steps = n_steps
@@ -98,15 +110,16 @@ class WolfSheep(Model):
 
         for x in range(self.grid.width):
             for y in range(self.grid.height):
-                a = GrassPatch(
-                    unique_id=self.current_id,
-                    model=self,
-                    fully_grown=random.uniform(0, 1) < self.initial_grown_grass,
-                    countdown=self.grass_regrowth_time,
-                )
-                self.schedule.add(a)
-                self.grid.place_agent(a, (x, y))
-                self.current_id += 1
+                if random.uniform(0, 1) < self.grass_probability:
+                    a = GrassPatch(
+                        unique_id=self.current_id,
+                        model=self,
+                        fully_grown=random.uniform(0, 1) < self.initial_grown_grass,
+                        countdown=self.grass_regrowth_time,
+                    )
+                    self.schedule.add(a)
+                    self.grid.place_agent(a, (x, y))
+                    self.current_id += 1
 
         for _ in range(self.initial_sheep):
             a = Sheep(
@@ -114,7 +127,7 @@ class WolfSheep(Model):
                 pos=None,
                 model=self,
                 moore=self.moore,
-                energy=self.initial_energy,
+                energy=self.sheep_initial_energy,
             )
             self.schedule.add(a)
             x = self.random.randrange(self.grid.width)
@@ -128,7 +141,7 @@ class WolfSheep(Model):
                 pos=None,
                 model=self,
                 moore=self.moore,
-                energy=self.initial_energy,
+                energy=self.wolf_initial_energy,
             )
             self.schedule.add(a)
             x = self.random.randrange(self.grid.width)

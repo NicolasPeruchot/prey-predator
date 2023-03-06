@@ -40,7 +40,7 @@ class RandomWalker(Agent):
         # Now move:
         self.model.grid.move_agent(self, next_move)
 
-    def breed(self, proba):
+    def breed(self, proba, energy):
         """
         Breed a new agent based on a given probability.
         """
@@ -50,7 +50,7 @@ class RandomWalker(Agent):
                 pos=None,
                 model=self.model,
                 moore=True,
-                energy=self.model.initial_energy,
+                energy=energy,
             )
             self.model.schedule.add(a)
             self.model.grid.place_agent(a, self.pos)
